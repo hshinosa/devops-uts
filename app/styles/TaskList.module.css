@@ -1,0 +1,131 @@
+.taskList {
+  display: grid;
+  gap: 1rem;
+}
+
+.taskCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.taskCard:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+
+.taskHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.taskHeader h4 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 1.25rem;
+  flex: 1;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
+}
+
+.priority,
+.status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.description {
+  color: #6b7280;
+  margin: 0.5rem 0 1rem 0;
+  line-height: 1.5;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.tag {
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.dueDate {
+  color: #f59e0b;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 1rem 0;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.statusSelect {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.statusSelect:hover {
+  border-color: #3b82f6;
+}
+
+.statusSelect:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.deleteButton {
+  padding: 0.5rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.deleteButton:hover {
+  background: #dc2626;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.deleteButton:active {
+  transform: scale(0.98);
+}

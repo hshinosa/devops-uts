@@ -1,0 +1,25 @@
+{
+  "name": "todo-devops-app",
+  "version": "1.0.0",
+  "description": "Web To-Do List with Next.js and MySQL",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "mysql2": "^3.9.0",
+    "axios": "^1.7.0",
+    "date-fns": "^3.6.0",
+    "zustand": "^5.0.0",
+    "framer-motion": "^11.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^15.1.0"
+  }
+}

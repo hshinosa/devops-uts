@@ -1,0 +1,93 @@
+/* Futuristic Tech Glassmorphism Theme - Design Tokens */
+
+:root {
+  /* Base Colors - Deep Space */
+  --background: #030305;
+  --background-gradient: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #030305 100%);
+  
+  /* Glass Surfaces */
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-highlight: rgba(255, 255, 255, 0.08);
+  --surface-glass: rgba(10, 10, 15, 0.6);
+  
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  
+  /* Tech Accents - Neon Style */
+  --primary: #00f0ff;        /* Cyber Cyan */
+  --primary-hover: #00c2ce;
+  --primary-glow: rgba(0, 240, 255, 0.3);
+  
+  --secondary: #7000ff;      /* Electric Violet */
+  --secondary-glow: rgba(112, 0, 255, 0.3);
+  
+  --accent-gradient: linear-gradient(135deg, #00f0ff 0%, #7000ff 100%);
+  
+  /* Semantic Colors */
+  --success: #00ff9d;        /* Neon Green */
+  --success-bg: rgba(0, 255, 157, 0.1);
+  --warning: #ffb800;        /* Neon Amber */
+  --warning-bg: rgba(255, 184, 0, 0.1);
+  --danger: #ff0055;         /* Neon Red */
+  --danger-bg: rgba(255, 0, 85, 0.1);
+  --info: #00a3ff;           /* Neon Blue */
+  --info-bg: rgba(0, 163, 255, 0.1);
+  
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-highlight: rgba(255, 255, 255, 0.15);
+  --border-glow: rgba(0, 240, 255, 0.3);
+  
+  /* Effects */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px var(--primary-glow), 0 0 40px rgba(0, 240, 255, 0.1);
+  
+  --backdrop-blur: blur(20px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  
+  /* Transitions */
+  --transition-fast: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-normal: 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  
+  /* Typography */
+  --font-mono: 'SF Mono', 'Fira Code', 'Roboto Mono', monospace;
+}
+
+body {
+  background-color: var(--background);
+  background-image: var(--background-gradient);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-highlight);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
