@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # 1. Service Database
+  mysql:
+    image: mysql:8.0
+    container_name: todo_mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: todo_app       #
+      MYSQL_USER: devops_user        #
+      MYSQL_PASSWORD: DevOps@2025    #
+      MYSQL_ROOT_PASSWORD: root_password_rahasia
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+    # Healthcheck: Next.js tunggu MySQL Siap
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Service Aplikasi Next.js
+  nextjs-app:
+    build: 
+      context: ./app                 
+      dockerfile: Dockerfile         # Nama file Anggota 1
+    container_name: todo_nextjs
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Koneksi database
+      DB_HOST: mysql                 # Nama service
+      DB_USER: devops_user
+      DB_PASSWORD: DevOps@2025
+      DB_NAME: todo_app
+      PORT: 3000
+    depends_on:
+      mysql:
+        condition: service_healthy   # Tunggu sampai MySQL healthcheck "healthy"
+    networks:
+      - app_network
+
+# Definisi Volume
+volumes:
+  mysql_data:
+
+# Definisi Network
+networks:
+  app_network:
+    driver: bridge
