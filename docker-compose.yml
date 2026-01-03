@@ -7,9 +7,9 @@ services:
     container_name: todo_mysql
     restart: always
     environment:
-      MYSQL_DATABASE: todo_app       #
-      MYSQL_USER: devops_user        #
-      MYSQL_PASSWORD: DevOps@2025    #
+      MYSQL_DATABASE: todo_app       
+      MYSQL_USER: devops_user        
+      MYSQL_PASSWORD: DevOps@2025    
       MYSQL_ROOT_PASSWORD: root_password_rahasia
     ports:
       - "3306:3306"
