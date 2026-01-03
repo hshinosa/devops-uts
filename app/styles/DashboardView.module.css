@@ -104,6 +104,36 @@
   transform: translateY(0);
 }
 
+.analyticsButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: rgba(112, 0, 255, 0.1);
+  color: var(--secondary);
+  border: 1px solid var(--secondary);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 15px rgba(112, 0, 255, 0.1);
+}
+
+.analyticsButton:hover {
+  background: var(--secondary);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(112, 0, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.analyticsButton:active {
+  transform: translateY(0);
+}
+
 /* Stats Grid */
 .statsGrid {
   display: grid;
