@@ -1,0 +1,396 @@
+---
+# ========================================
+# Ansible Playbook: DevOps Infrastructure Setup
+# ========================================
+# Author: Anggota 5 - The Automator
+# Purpose: Automated installation of Docker, Docker Compose, Kubernetes tools, and Node Exporter
+# 
+# Usage:
+#   ansible-playbook ansible/setup.yml -i ansible/inventory
+#
+# Prerequisites:
+#   - Ansible installed on control machine
+#   - SSH access to managed hosts
+#   - Sudo privileges on managed hosts
+# ========================================
+
+- name: Setup DevOps Infrastructure
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    # Tool versions (update as needed)
+    docker_compose_version: "2.24.0"
+    node_exporter_version: "1.7.0"
+    minikube_version: "latest"
+    
+    # Node Exporter configuration
+    node_exporter_user: "node_exporter"
+    node_exporter_group: "node_exporter"
+    node_exporter_bin_path: "/usr/local/bin/node_exporter"
+    node_exporter_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+
+  tasks:
+    # ========================================
+    # PHASE 1: System Update & Prerequisites
+    # ========================================
+    
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: [system, update]
+    
+    - name: Upgrade all packages to latest version
+      apt:
+        upgrade: dist
+        update_cache: yes
+      tags: [system, update]
+      when: ansible_os_family == "Debian"
+    
+    - name: Install common dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - wget
+          - gnupg
+          - lsb-release
+          - software-properties-common
+          - git
+          - vim
+          - net-tools
+          - unzip
+        state: present
+        update_cache: yes
+      tags: [system, dependencies]
+
+    # ========================================
+    # PHASE 2: Docker Installation
+    # ========================================
+    
+    - name: Remove old Docker versions (if any)
+      apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
+      tags: [docker]
+    
+    - name: Create directory for Docker GPG key
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      tags: [docker]
+    
+    - name: Add Docker GPG key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        chmod a+r /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+      tags: [docker]
+    
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+      tags: [docker]
+    
+    - name: Install Docker CE
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+      tags: [docker]
+    
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+      tags: [docker]
+    
+    - name: Add current user to docker group
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+      tags: [docker]
+      when: ansible_user_id != "root"
+    
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+      changed_when: false
+      tags: [docker, verify]
+    
+    - name: Display Docker version
+      debug:
+        msg: "Docker installed: {{ docker_version.stdout }}"
+      tags: [docker, verify]
+
+    # ========================================
+    # PHASE 3: Docker Compose Installation
+    # ========================================
+    
+    - name: Download Docker Compose binary
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/v{{ docker_compose_version }}/docker-compose-linux-x86_64"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+      tags: [docker-compose]
+    
+    - name: Create docker-compose symlink (alternative command)
+      file:
+        src: /usr/local/bin/docker-compose
+        dest: /usr/bin/docker-compose
+        state: link
+      tags: [docker-compose]
+      ignore_errors: yes
+    
+    - name: Verify Docker Compose installation
+      command: docker-compose --version
+      register: compose_version
+      changed_when: false
+      tags: [docker-compose, verify]
+    
+    - name: Display Docker Compose version
+      debug:
+        msg: "Docker Compose installed: {{ compose_version.stdout }}"
+      tags: [docker-compose, verify]
+
+    # ========================================
+    # PHASE 4: Kubernetes Tools Installation
+    # ========================================
+    
+    - name: Add Kubernetes GPG key
+      shell: |
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        chmod a+r /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      args:
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      tags: [kubernetes, kubectl]
+    
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /"
+        state: present
+        filename: kubernetes
+      tags: [kubernetes, kubectl]
+    
+    - name: Install kubectl
+      apt:
+        name: kubectl
+        state: present
+        update_cache: yes
+      tags: [kubernetes, kubectl]
+    
+    - name: Verify kubectl installation
+      command: kubectl version --client
+      register: kubectl_version
+      changed_when: false
+      tags: [kubernetes, kubectl, verify]
+    
+    - name: Display kubectl version
+      debug:
+        msg: "kubectl installed: {{ kubectl_version.stdout }}"
+      tags: [kubernetes, kubectl, verify]
+    
+    - name: Install conntrack (required for Minikube)
+      apt:
+        name: conntrack
+        state: present
+      tags: [kubernetes, minikube]
+    
+    - name: Download Minikube binary
+      get_url:
+        url: "https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64"
+        dest: /usr/local/bin/minikube
+        mode: '0755'
+      tags: [kubernetes, minikube]
+    
+    - name: Verify Minikube installation
+      command: minikube version
+      register: minikube_version
+      changed_when: false
+      tags: [kubernetes, minikube, verify]
+    
+    - name: Display Minikube version
+      debug:
+        msg: "Minikube installed: {{ minikube_version.stdout }}"
+      tags: [kubernetes, minikube, verify]
+
+    # ========================================
+    # PHASE 5: Node Exporter Installation
+    # ========================================
+    
+    - name: Create node_exporter system user
+      user:
+        name: "{{ node_exporter_user }}"
+        system: yes
+        shell: /bin/false
+        create_home: no
+      tags: [node_exporter, monitoring]
+    
+    - name: Create temporary directory for Node Exporter
+      file:
+        path: /tmp/node_exporter
+        state: directory
+      tags: [node_exporter, monitoring]
+    
+    - name: Download Node Exporter
+      get_url:
+        url: "{{ node_exporter_download_url }}"
+        dest: /tmp/node_exporter/node_exporter.tar.gz
+      tags: [node_exporter, monitoring]
+    
+    - name: Extract Node Exporter
+      unarchive:
+        src: /tmp/node_exporter/node_exporter.tar.gz
+        dest: /tmp/node_exporter/
+        remote_src: yes
+      tags: [node_exporter, monitoring]
+    
+    - name: Copy Node Exporter binary to system path
+      copy:
+        src: "/tmp/node_exporter/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+        dest: "{{ node_exporter_bin_path }}"
+        owner: "{{ node_exporter_user }}"
+        group: "{{ node_exporter_group }}"
+        mode: '0755'
+        remote_src: yes
+      tags: [node_exporter, monitoring]
+    
+    - name: Create Node Exporter systemd service
+      copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User={{ node_exporter_user }}
+          Group={{ node_exporter_group }}
+          Type=simple
+          ExecStart={{ node_exporter_bin_path }}
+          Restart=on-failure
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '0644'
+      tags: [node_exporter, monitoring]
+      notify: Reload systemd
+    
+    - name: Start and enable Node Exporter service
+      systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      tags: [node_exporter, monitoring]
+    
+    - name: Wait for Node Exporter to start
+      wait_for:
+        port: 9100
+        delay: 2
+        timeout: 30
+      tags: [node_exporter, monitoring]
+    
+    - name: Verify Node Exporter is running
+      command: systemctl status node_exporter
+      register: node_exporter_status
+      changed_when: false
+      tags: [node_exporter, monitoring, verify]
+    
+    - name: Test Node Exporter metrics endpoint
+      uri:
+        url: http://localhost:9100/metrics
+        return_content: yes
+      register: metrics_response
+      tags: [node_exporter, monitoring, verify]
+    
+    - name: Display Node Exporter status
+      debug:
+        msg: "Node Exporter is running and accessible at http://localhost:9100/metrics"
+      when: metrics_response.status == 200
+      tags: [node_exporter, monitoring, verify]
+    
+    - name: Clean up temporary files
+      file:
+        path: /tmp/node_exporter
+        state: absent
+      tags: [node_exporter, monitoring, cleanup]
+
+    # ========================================
+    # PHASE 6: Final Verification
+    # ========================================
+    
+    - name: Summary - Docker
+      debug:
+        msg:
+          - "================================"
+          - "Docker: {{ docker_version.stdout }}"
+          - "Docker Compose: {{ compose_version.stdout }}"
+          - "================================"
+      tags: [verify, summary]
+    
+    - name: Summary - Kubernetes
+      debug:
+        msg:
+          - "================================"
+          - "kubectl: Installed"
+          - "Minikube: {{ minikube_version.stdout }}"
+          - "================================"
+      tags: [verify, summary]
+    
+    - name: Summary - Monitoring
+      debug:
+        msg:
+          - "================================"
+          - "Node Exporter: Running on port 9100"
+          - "Metrics: http://localhost:9100/metrics"
+          - "================================"
+      tags: [verify, summary]
+    
+    - name: Final Message
+      debug:
+        msg:
+          - "========================================="
+          - "✅ DevOps Infrastructure Setup Complete!"
+          - "========================================="
+          - "All tools installed successfully:"
+          - "  - Docker & Docker Compose"
+          - "  - Kubernetes (kubectl & Minikube)"
+          - "  - Node Exporter (Monitoring)"
+          - ""
+          - "Next steps:"
+          - "  1. Logout and login to apply Docker group"
+          - "  2. Test: docker run hello-world"
+          - "  3. Start Minikube: minikube start --driver=docker"
+          - "  4. Verify metrics: curl http://localhost:9100/metrics"
+          - "========================================="
+      tags: [verify, summary]
+
+  # ========================================
+  # Handlers
+  # ========================================
+  handlers:
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
