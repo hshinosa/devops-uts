@@ -1,0 +1,16 @@
+{
+  "title": "Memory Usage",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Memory Usage (per Pod)",
+      "targets": [
+        {
+          "expr": "sum(container_memory_working_set_bytes{container!=\"\"}) by (pod)",
+          "legendFormat": "{{pod}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
