@@ -6,6 +6,7 @@ This directory contains Kubernetes manifests for deploying the Todo DevOps appli
 
 - `mysql.yaml` - MySQL database deployment with persistent storage
 - `nextjs-app.yaml` - Next.js application deployment with auto-scaling
+- `ingress.yaml` - Ingress controller for custom domain routing
 
 ## Quick Start
 
@@ -26,6 +27,28 @@ kubectl get services
 kubectl get svc nextjs-service
 ```
 
+## Optional: Ingress Setup
+
+```bash
+# Install NGINX Ingress Controller (if not already installed)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
+
+# Wait for ingress controller
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+
+# Apply ingress
+kubectl apply -f k8s/ingress.yaml
+
+# Add to hosts file (Windows: C:\Windows\System32\drivers\etc\hosts)
+# 127.0.0.1 todo.local
+
+# Access via custom domain
+# http://todo.local
+```
+
 ## Components
 
 ### MySQL
@@ -36,10 +59,28 @@ kubectl get svc nextjs-service
 - Service (ClusterIP on port 3306)
 
 ### Next.js App
-- Deployment (3 replicas)
+- Deployment (2-10 replicas with HPA)
 - Service (LoadBalancer on port 80)
-- HorizontalPodAutoscaler (scale 3-10 pods)
+- HorizontalPodAutoscaler (scale 2-10 pods based on CPU 60%, Memory 70%)
 - Health checks (liveness & readiness probes)
+- Resource limits: CPU 500m-1000m, Memory 512Mi-1Gi
+
+### Ingress (Optional)
+- Custom domain routing (todo.local)
+- Path-based routing support
+- SSL/TLS ready
+
+## Resource Allocation
+
+### MySQL
+- **Requests**: 250m CPU, 256Mi Memory
+- **Limits**: 500m CPU, 512Mi Memory
+- **Storage**: 5Gi persistent volume
+
+### Next.js App
+- **Requests**: 500m CPU, 512Mi Memory
+- **Limits**: 1000m CPU, 1Gi Memory
+- **Auto-scaling**: 2-10 pods based on load
 
 ## Verify Deployment
 

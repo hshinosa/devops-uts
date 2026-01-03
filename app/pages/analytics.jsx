@@ -1,15 +1,20 @@
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/router';
+import { useState } from 'react';
 import useStats from '../hooks/useStats';
 import StatsCards from '../components/StatsCards';
 import PriorityChart from '../components/PriorityChart';
 import StatusChart from '../components/StatusChart';
+import TimeSeriesChart from '../components/TimeSeriesChart';
+import DateRangePicker from '../components/DateRangePicker';
+import ExportButton from '../components/ExportButton';
 import styles from '../styles/Analytics.module.css';
 import dashboardStyles from '../styles/DashboardView.module.css';
 
 export default function Analytics() {
   const router = useRouter();
   const { stats, loading, error, refetch } = useStats();
+  const [dateRange, setDateRange] = useState(7);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -46,6 +51,7 @@ export default function Analytics() {
             <p className={dashboardStyles.subtitle}>Track your task performance and insights</p>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
+            <ExportButton />
             <motion.button
               className={styles.refreshButton}
               onClick={refetch}
@@ -94,9 +100,19 @@ export default function Analytics() {
         {/* Analytics Content */}
         {!loading && !error && stats && (
           <>
+            {/* Date Range Picker */}
+            <motion.div variants={itemVariants}>
+              <DateRangePicker onChange={setDateRange} />
+            </motion.div>
+
             {/* KPI Cards */}
             <motion.div variants={itemVariants}>
-              <StatsCards stats={stats} />
+              <StatsCards stats={stats} days={dateRange} />
+            </motion.div>
+
+            {/* Time Series Chart */}
+            <motion.div variants={itemVariants}>
+              <TimeSeriesChart days={dateRange} />
             </motion.div>
 
             {/* Charts Grid */}

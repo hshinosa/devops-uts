@@ -1,12 +1,43 @@
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import styles from '../styles/Analytics.module.css';
 
 /**
  * KPI Cards Component
- * Displays key performance indicators for tasks
+ * Displays key performance indicators for tasks with trend indicators
  */
-export default function StatsCards({ stats }) {
+export default function StatsCards({ stats, days = 7 }) {
+  const [trends, setTrends] = useState(null);
+
+  useEffect(() => {
+    fetchTrends();
+  }, [days]);
+
+  const fetchTrends = async () => {
+    try {
+      const response = await fetch(`/api/stats/trends?days=${days}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTrends(data.trends);
+      }
+    } catch (error) {
+      console.error('Failed to fetch trends:', error);
+    }
+  };
+
   if (!stats) return null;
+
+  const getTrendIcon = (change) => {
+    if (change > 0) return '↑';
+    if (change < 0) return '↓';
+    return '→';
+  };
+
+  const getTrendColor = (change) => {
+    if (change > 0) return styles.trendUp;
+    if (change < 0) return styles.trendDown;
+    return styles.trendNeutral;
+  };
 
   const cards = [
     {
@@ -14,28 +45,29 @@ export default function StatsCards({ stats }) {
       value: stats.summary.totalTasks,
       icon: '📋',
       color: 'cyan',
-      trend: null
+      trend: trends?.total
     },
     {
       title: 'Completed',
       value: stats.summary.completedTasks,
       icon: '✅',
       color: 'green',
-      percentage: `${stats.summary.completionRate}%`
+      percentage: `${stats.summary.completionRate}%`,
+      trend: trends?.completed
     },
     {
       title: 'In Progress',
       value: stats.summary.inProgressTasks,
       icon: '⚡',
       color: 'violet',
-      trend: null
+      trend: trends?.inProgress
     },
     {
       title: 'Pending',
       value: stats.summary.pendingTasks,
       icon: '⏳',
       color: 'orange',
-      trend: null
+      trend: trends?.pending
     }
   ];
 
@@ -79,6 +111,12 @@ export default function StatsCards({ stats }) {
             <div className={styles.statValue}>{card.value}</div>
             {card.percentage && (
               <div className={styles.statPercentage}>{card.percentage}</div>
+            )}
+            {card.trend && (
+              <div className={`${styles.statTrend} ${getTrendColor(card.trend.change)}`}>
+                <span className={styles.trendIcon}>{getTrendIcon(card.trend.change)}</span>
+                <span className={styles.trendValue}>{Math.abs(card.trend.change)}%</span>
+              </div>
             )}
           </div>
         </motion.div>
