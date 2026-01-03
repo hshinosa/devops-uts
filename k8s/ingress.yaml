@@ -1,0 +1,89 @@
+# Kubernetes Ingress Configuration
+# Provides HTTP/HTTPS routing and custom domain support
+# 
+# Prerequisites:
+# - NGINX Ingress Controller must be installed
+# - For local testing, add to hosts file: 127.0.0.1 todo.local
+#
+# Installation:
+# kubectl apply -f ingress.yaml
+#
+# Features:
+# - Custom domain routing (todo.local)
+# - Path-based routing support
+# - Ready for SSL/TLS certificates
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: todo-app-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Optional: Enable rate limiting
+    # nginx.ingress.kubernetes.io/limit-rps: "100"
+    # Optional: Enable CORS
+    # nginx.ingress.kubernetes.io/enable-cors: "true"
+    # nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+spec:
+  ingressClassName: nginx
+  rules:
+    # Custom domain routing
+    - host: todo.local
+      http:
+        paths:
+          # Main application routes
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextjs-app-service
+                port:
+                  number: 80
+          
+          # API routes (explicit routing for better control)
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: nextjs-app-service
+                port:
+                  number: 80
+  
+  # TLS/SSL Configuration (uncomment when ready)
+  # tls:
+  #   - hosts:
+  #       - todo.local
+  #     secretName: todo-tls-secret
+  # 
+  # To create TLS secret:
+  # kubectl create secret tls todo-tls-secret \
+  #   --cert=path/to/tls.crt \
+  #   --key=path/to/tls.key
+
+---
+# Alternative: Wildcard routing for multiple subdomains
+# Uncomment if you need subdomain support (e.g., api.todo.local, admin.todo.local)
+#
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: todo-app-ingress-wildcard
+#   namespace: default
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#     - host: "*.todo.local"
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: nextjs-app-service
+#                 port:
+#                   number: 80

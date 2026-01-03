@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/router';
 import styles from '../styles/DashboardView.module.css';
 import { useTasks } from '../hooks/useTasks';
 import { useTaskStats } from '../hooks/useTaskStats';
 
 export default function DashboardView() {
+  const router = useRouter();
   const { stats: statsData, loading: statsLoading } = useTaskStats();
   const {
     tasks,
@@ -133,18 +135,34 @@ export default function DashboardView() {
             <h1 className={styles.title}>Tasks</h1>
             <p className={styles.subtitle}>Manage and track your work efficiently</p>
           </div>
-          <motion.button
-            className={styles.createButton}
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New task
-          </motion.button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <motion.button
+              className={styles.analyticsButton}
+              onClick={() => router.push('/analytics')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3v18h18" />
+                <path d="M18 17V9" />
+                <path d="M13 17V5" />
+                <path d="M8 17v-3" />
+              </svg>
+              Analytics
+            </motion.button>
+            <motion.button
+              className={styles.createButton}
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New task
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* Statistics Grid */}
