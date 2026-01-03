@@ -1,15 +1,21 @@
 import mysql from 'mysql2/promise';
 
-const pool = mysql.createPool({
+const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'devops_user',
-  password: process.env.DB_PASSWORD || 'DevOps@2025',
   database: process.env.DB_NAME || 'todo_app',
-  port: process.env.DB_PORT || 3306,
+  port: parseInt(process.env.DB_PORT) || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-});
+};
+
+// Only add password if it's defined and not empty
+if (process.env.DB_PASSWORD && process.env.DB_PASSWORD !== '""') {
+  dbConfig.password = process.env.DB_PASSWORD;
+}
+
+const pool = mysql.createPool(dbConfig);
 
 export async function executeQuery(query, params = []) {
   let connection;

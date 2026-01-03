@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSession, signOut } from 'next-auth/react';
 import styles from '../styles/DashboardView.module.css';
 import { useTasks } from '../hooks/useTasks';
 import { useTaskStats } from '../hooks/useTaskStats';
 
 export default function DashboardView() {
+  const { data: session } = useSession();
   const { stats: statsData, loading: statsLoading } = useTaskStats();
   const {
     tasks,
@@ -130,21 +132,41 @@ export default function DashboardView() {
         {/* Header */}
         <motion.div className={styles.header} variants={itemVariants}>
           <div className={styles.headerContent}>
-            <h1 className={styles.title}>Tasks</h1>
-            <p className={styles.subtitle}>Manage and track your work efficiently</p>
+            <div>
+              <h1 className={styles.title}>Tasks</h1>
+              <p className={styles.subtitle}>
+                Welcome, {session?.user?.username || 'Agent'} | Manage and track your work efficiently
+              </p>
+            </div>
           </div>
-          <motion.button
-            className={styles.createButton}
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New task
-          </motion.button>
+          <div className={styles.headerButtons}>
+            <motion.button
+              className={styles.createButton}
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New task
+            </motion.button>
+            <motion.button
+              className={styles.logoutButton}
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              title="Logout"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Logout
+            </motion.button>
+          </div>
         </motion.div>
 
         {/* Statistics Grid */}
