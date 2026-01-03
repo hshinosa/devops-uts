@@ -1,0 +1,54 @@
+---
+# Global Variables untuk semua hosts
+# Ansible Infrastructure Setup - Proyek DevOps To-Do List
+
+# ==========================================
+# Docker Configuration
+# ==========================================
+docker_edition: 'ce'
+docker_version: '24.0'
+docker_compose_version: 'v2.21.0'
+docker_users:
+  - ubuntu
+
+# ==========================================
+# Kubernetes Configuration
+# ==========================================
+kubernetes_version: '1.28'
+kubernetes_cni_version: '1.3.0'
+kubernetes_pod_network_cidr: '10.244.0.0/16'
+
+# ==========================================
+# Node Exporter Configuration
+# ==========================================
+node_exporter_version: '1.7.0'
+node_exporter_port: 9100
+node_exporter_user: 'node_exporter'
+node_exporter_group: 'node_exporter'
+
+# ==========================================
+# Application Configuration
+# ==========================================
+app_name: 'todo-devops'
+app_frontend_port: 3000
+app_backend_port: 5000
+app_database_port: 5432
+
+# ==========================================
+# System Configuration
+# ==========================================
+timezone: 'Asia/Jakarta'
+ntp_enabled: true
+
+# ==========================================
+# Docker Hub Configuration
+# ==========================================
+docker_hub_username: 'your-dockerhub-username'
+docker_hub_password: '{{ vault_docker_hub_password }}'
+
+# ==========================================
+# PostgreSQL Configuration
+# ==========================================
+postgres_user: 'todouser'
+postgres_password: '{{ vault_postgres_password }}'
+postgres_database: 'tododb'

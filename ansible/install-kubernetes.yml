@@ -1,0 +1,187 @@
+---
+# Playbook: Install Kubernetes Tools
+# Tugas: Anggota 4 - Ansible Infrastructure Setup
+# Deskripsi: Menginstal kubectl, kubeadm, dan kubelet pada managed hosts
+
+- name: Install Kubernetes Tools
+  hosts: kubernetes
+  become: true
+  gather_facts: true
+
+  vars:
+    kubernetes_apt_release_channel: stable
+    kubernetes_version_apt: "{{ kubernetes_version }}"
+    kubernetes_apt_repository: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/ /"
+    kubernetes_apt_gpg_key: "https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/Release.key"
+
+  tasks:
+    # ==========================================
+    # Prerequisites - System Configuration
+    # ==========================================
+    - name: Disable swap
+      ansible.builtin.command: swapoff -a
+      when: ansible_swaptotal_mb > 0
+      changed_when: true
+
+    - name: Remove swap from fstab
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^.*swap.*$'
+        state: absent
+
+    - name: Load required kernel modules
+      ansible.builtin.modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - overlay
+        - br_netfilter
+
+    - name: Ensure kernel modules load on boot
+      ansible.builtin.copy:
+        content: |
+          overlay
+          br_netfilter
+        dest: /etc/modules-load.d/kubernetes.conf
+        mode: '0644'
+
+    - name: Configure sysctl for Kubernetes
+      ansible.builtin.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_file: /etc/sysctl.d/kubernetes.conf
+        reload: true
+      loop:
+        - { name: 'net.bridge.bridge-nf-call-iptables', value: '1' }
+        - { name: 'net.bridge.bridge-nf-call-ip6tables', value: '1' }
+        - { name: 'net.ipv4.ip_forward', value: '1' }
+
+    # ==========================================
+    # Install Prerequisites
+    # ==========================================
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    # ==========================================
+    # Add Kubernetes Repository
+    # ==========================================
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Add Kubernetes GPG key
+      ansible.builtin.shell: |
+        curl -fsSL {{ kubernetes_apt_gpg_key }} | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      args:
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    - name: Add Kubernetes repository
+      ansible.builtin.apt_repository:
+        repo: "{{ kubernetes_apt_repository }}"
+        state: present
+        filename: kubernetes
+
+    # ==========================================
+    # Install Kubernetes Components
+    # ==========================================
+    - name: Update apt cache after adding repository
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Kubernetes packages
+      ansible.builtin.apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+
+    - name: Hold Kubernetes packages at current version
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    # ==========================================
+    # Configure Kubelet
+    # ==========================================
+    - name: Ensure kubelet service is enabled
+      ansible.builtin.systemd:
+        name: kubelet
+        enabled: true
+        daemon_reload: true
+
+    # ==========================================
+    # Configure Container Runtime (containerd)
+    # ==========================================
+    - name: Create containerd config directory
+      ansible.builtin.file:
+        path: /etc/containerd
+        state: directory
+        mode: '0755'
+
+    - name: Generate default containerd config
+      ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
+      args:
+        creates: /etc/containerd/config.toml
+
+    - name: Configure containerd to use systemd cgroup driver
+      ansible.builtin.replace:
+        path: /etc/containerd/config.toml
+        regexp: 'SystemdCgroup = false'
+        replace: 'SystemdCgroup = true'
+      notify: Restart containerd
+
+    # ==========================================
+    # Verification
+    # ==========================================
+    - name: Verify kubectl installation
+      ansible.builtin.command: kubectl version --client --output=yaml
+      register: kubectl_version_output
+      changed_when: false
+
+    - name: Display kubectl version
+      ansible.builtin.debug:
+        msg: "kubectl installed successfully"
+
+    - name: Verify kubeadm installation
+      ansible.builtin.command: kubeadm version -o short
+      register: kubeadm_version_output
+      changed_when: false
+
+    - name: Display kubeadm version
+      ansible.builtin.debug:
+        msg: "kubeadm installed: {{ kubeadm_version_output.stdout }}"
+
+    - name: Verify kubelet installation
+      ansible.builtin.command: kubelet --version
+      register: kubelet_version_output
+      changed_when: false
+
+    - name: Display kubelet version
+      ansible.builtin.debug:
+        msg: "kubelet installed: {{ kubelet_version_output.stdout }}"
+
+  handlers:
+    - name: Restart containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted
+        daemon_reload: true
